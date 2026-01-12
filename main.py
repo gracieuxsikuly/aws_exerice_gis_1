@@ -1,6 +1,7 @@
 import boto3
 import os
 import logging
+import json
 
 logging.basicConfig(level=logging.INFO)
 
@@ -26,8 +27,41 @@ def creation_bucket():
             VersioningConfiguration={"Status": "Enabled"}
         )
         logging.info("versionning active")
-    except s3.exceptions.BucketAlreadyOwnedByYou:
-        logging.warning("bucket"+ BUCKET_NAME + "est deja cree")
+        ma_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "DenyDeleteForOthers",
+                "Effect": "Deny",
+                "Principal": "*",
+                "Action": [
+                     "s3:DeleteObject",
+                    "s3:DeleteObjectVersion"
+                ],
+                "Resource": f"arn:aws:s3:::{BUCKET_NAME}/raw/*",
+                "Condition": {
+                "ArnNotLike": {
+                     "aws:PrincipalArn": "arn:aws:sts::341395375209:assumed-role/AWSReservedSSO_PowerUserAccess_e336dee556ef96ac/*"
+                }
+            }
+            },
+         
+        ]
+    }
+ # Create a bucket policy
+        # Appliquer la policy sur le bucket
+        response = s3.put_bucket_policy(
+            Bucket=BUCKET_NAME,           
+            Policy=json.dumps(ma_policy) 
+        )
+        # activation de la policy
+        # s3.put_bucket_policy(Bucket=BUCKET_NAME, Policy=bucket_policy)
+        # bucket_policy = json.dumps(bucket_policy)
+        logging.info(response)
+    except s3.exceptions.BucketAlreadyExists as e:
+        logging.warning(f"Error: {e.response['Error']['Code']}")
+    # except s3.exceptions.BucketAlreadyOwnedByYou:
+    #     logging.warning("bucket"+ BUCKET_NAME + "est deja cree")
 
 def upload_fichier():
     # création des dossiers S3
