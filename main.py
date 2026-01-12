@@ -27,6 +27,7 @@ def creation_bucket():
             VersioningConfiguration={"Status": "Enabled"}
         )
         logging.info("versionning active")
+         # Create a bucket policy
         ma_policy = {
         "Version": "2012-10-17",
         "Statement": [
@@ -48,7 +49,6 @@ def creation_bucket():
          
         ]
     }
- # Create a bucket policy
         # Appliquer la policy sur le bucket
         response = s3.put_bucket_policy(
             Bucket=BUCKET_NAME,           
