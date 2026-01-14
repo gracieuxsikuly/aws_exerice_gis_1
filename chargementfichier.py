@@ -1,9 +1,8 @@
 import logging
-import json
 from maclassetest import Maclasse
-import pandas as pd
-import geopandas as gp
+import geopandas as gpd
 import matplotlib.pyplot as plt
+from tabulate import tabulate
 
 logging.basicConfig(level=logging.INFO)
 # instance de ma classe
@@ -16,8 +15,32 @@ def chargement_fichier():
     Bucket=con.BUCKET_NAME,
     Key=s3_key,
     )
-    file_content=response["Body"]
-    jsonObject=json.loads(file_content.read())
-    logging.info(jsonObject)
-    
+    contenu_data=response["Body"].read()
+    gdf=gpd.read_file(contenu_data)
+    # j'affiche l'echantillons de 3 entites
+    logging.info(
+    "\n%s",
+    tabulate(
+        gdf[["culture", "geometry"]].head(3),
+        headers="keys",
+        tablefmt="grid",
+        showindex=False
+    ))
+# mon resultat de la validation
+    MonResultat = [
+    ["CRS", gdf.crs],
+    ["Type géométrie",(gdf.geometry.geom_type.unique())],
+    ["Nombre d'entités", len(gdf)],
+    ["Géométries valides", f"{gdf.is_valid.sum()} / {len(gdf)}"],
+    ]
+    # affichage
+    logging.info(
+    "\n%s",
+    tabulate(
+        MonResultat,
+        headers=["Information", "Valeur"],
+        tablefmt="grid"
+    ))
+    # gdf.plot()
+    # plt.show()
 chargement_fichier()
