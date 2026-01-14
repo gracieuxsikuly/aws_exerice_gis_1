@@ -1,5 +1,6 @@
 import os
 import logging
+import json
 from maclassetest import Maclasse
 
 logging.basicConfig(level=logging.INFO)
@@ -45,14 +46,12 @@ def creation_bucket():
     }
         # Appliquer la policy sur le bucket
         # response = s3.put_bucket_policy(
-        #     Bucket=BUCKET_NAME,           
+        #     Bucket=con.BUCKET_NAME,           
         #     Policy=json.dumps(ma_policy) 
         # )
         # logging.info(response)
     except s3.exceptions.BucketAlreadyExists as e:
         logging.warning(f"Error: {e.response['Error']['Code']}")
-    # except s3.exceptions.BucketAlreadyOwnedByYou:
-    #     logging.warning("bucket"+ BUCKET_NAME + "est deja cree")
 
 def upload_fichier():
     # création des dossiers S3

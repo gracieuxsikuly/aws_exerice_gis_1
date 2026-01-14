@@ -1,6 +1,9 @@
 import logging
 import json
 from maclassetest import Maclasse
+import pandas as pd
+import geopandas as gp
+import matplotlib.pyplot as plt
 
 logging.basicConfig(level=logging.INFO)
 # instance de ma classe
@@ -16,4 +19,5 @@ def chargement_fichier():
     file_content=response["Body"]
     jsonObject=json.loads(file_content.read())
     logging.info(jsonObject)
+    
 chargement_fichier()
