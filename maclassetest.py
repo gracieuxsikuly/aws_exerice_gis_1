@@ -1,6 +1,7 @@
 import boto3
 class Maclasse:
     #configuration de notre compte aws
+    # AWS_PROFIL="compteprive"
     AWS_PROFIL="default"
     AWS_REGION = "us-east-1"
     BUCKET_NAME ="mbau-gracier"

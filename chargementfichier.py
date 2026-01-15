@@ -3,6 +3,7 @@ from maclassetest import Maclasse
 import geopandas as gpd
 import matplotlib.pyplot as plt
 from tabulate import tabulate
+from io import BytesIO
 
 logging.basicConfig(level=logging.INFO)
 # instance de ma classe
@@ -16,7 +17,7 @@ def chargement_fichier():
     Key=s3_key,
     )
     contenu_data=response["Body"].read()
-    gdf=gpd.read_file(contenu_data)
+    gdf=gpd.read_file(BytesIO(contenu_data))
     # j'affiche l'echantillons de 3 entites
     logging.info(
     "\n%s",
@@ -41,6 +42,6 @@ def chargement_fichier():
         headers=["Information", "Valeur"],
         tablefmt="grid"
     ))
-    # gdf.plot()
-    # plt.show()
+    gdf.plot()
+    plt.show()
 chargement_fichier()
