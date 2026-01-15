@@ -40,4 +40,27 @@ def copy_raw_to_process(filename):
     logging.info(f"Copie RAW vers PROCESSED: {filename}")
 def download_from_process(filename):
     """telecharger le fichier depuis mon process vers un temp"""
-    
+    s3_key = f"{PROCESS_FOLDER}/{filename}"
+    local_path=f"/tmp/{filename}"
+    s3.download_file(con.BUCKET_NAME,s3_key,local_path)
+    return local_path
+def upload_to_output(local_path):
+    """upload mon fichir local vers output"""
+    filename=os.path.basename(local_path)
+    s3_key=f"{OUTPUT_FOLDER}/{filename}"
+    s3.upload_file(local_path,con.BUCKET_NAME,s3_key)
+
+logging.info("copie des fichiers de raw vers process")
+for file in MES_FILES:
+    copy_raw_to_process(file)
+palmiers_path=download_from_process("palmiers.geojson")
+routes_path=download_from_process("routes.geojson")
+# zone_path=download_from_process("palmiers.geojson")
+palmiers=gpd.read_file(palmiers_path)
+routes = gpd.read_file(routes_path)
+# zones =gpd.read_file(zone_path)
+logging.info("Fichiers charges avec success")
+palmiers=palmiers.to_crs(CRS_METRIQUE)
+routes=routes.to_crs(CRS_METRIQUE)
+# zones=zones.to_crs(CRS_METRIQUE)
+logging.info("Reprojection terminee")
