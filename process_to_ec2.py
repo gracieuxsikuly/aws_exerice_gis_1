@@ -1,6 +1,4 @@
-import boto3
 import geopandas as gpd
-from pathlib import Path
 from maclassetest import Maclasse
 import os
 import logging
@@ -16,11 +14,12 @@ MES_FILES={
     "zone" : "zones.geojson"
 }
 CRS_METRIQUE= "EPSG:32735"
-LOG_DIR ="/tmp/logs"
+LOG_DIR = "/tmp/logs"
+LOG_FILE = f"{LOG_DIR}/execution.log"
 os.makedirs(LOG_DIR,exist_ok=True)
 
 logging.basicConfig(
-    filename=f"{LOG_DIR}/execution.log",
+    filename=LOG_FILE,
     level=logging.INFO,
     format="%(acstime)s-%(levelname)s-%(message)s"
 )
@@ -55,12 +54,45 @@ for file in MES_FILES:
     copy_raw_to_process(file)
 palmiers_path=download_from_process("palmiers.geojson")
 routes_path=download_from_process("routes.geojson")
-# zone_path=download_from_process("palmiers.geojson")
+zone_path=download_from_process("palmiers.geojson")
 palmiers=gpd.read_file(palmiers_path)
 routes = gpd.read_file(routes_path)
-# zones =gpd.read_file(zone_path)
+zones =gpd.read_file(zone_path)
 logging.info("Fichiers charges avec success")
 palmiers=palmiers.to_crs(CRS_METRIQUE)
 routes=routes.to_crs(CRS_METRIQUE)
-# zones=zones.to_crs(CRS_METRIQUE)
+zones=zones.to_crs(CRS_METRIQUE)
 logging.info("Reprojection terminee")
+# """distance palmier route"""
+palmiers["distance_route_m"]=palmiers.geometry.apply(
+    lambda geom: routes.distance(geom).min()
+)
+palmiers_result = "/tmp/palmiers_distance.geojson"
+palmiers.to_file(palmiers_result,driver="GEOJSON")
+upload_to_output(palmiers_result)
+# densite de palmiers par zone
+palmiers_zone=gpd.sjoin(palmiers,zones,predicate="within")
+densite=(
+    palmiers_zone
+    .groupby("index_right")
+    .size()
+    .reset_index(name="nb_palmiers")
+)
+zones["surface_km2"]= zones.geometry.area/1_000_000
+zones = zones.merge(
+    densite,
+    left_index=True,
+    right_on="index_right",
+    how="left"
+)
+zones["nb_palmiers"]= zones["nb_palmiers"].fillna(0)
+zones["densite_palmiers_km2"] =zones["nb_palmiers"]/zones["surface_km2"]
+densite_result="/tmp/densite_palmiers.csv"
+zones[["nb_palmiers","densite_palmiers_km2"]].to_csv(
+    densite_result,
+    index=False
+)
+upload_to_output(densite_result)
+# charger le logs sur Ec2
+upload_to_output(LOG_FILE)
+logging.info("===== Fin de traitement=====")
