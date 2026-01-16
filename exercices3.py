@@ -1,5 +1,3 @@
-import shapely as sp
-from shapely.validation import explain_validity
 import matplotlib.pyplot as plt
 import geopandas as gpd
 from pathlib import Path
