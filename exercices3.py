@@ -15,7 +15,7 @@ pnvi=gpd.read_file(pnvi_file)
 
 centroid_prov=provinces.centroid
 centroid_pnvi=pnvi.centroid
-provinces["distance_parc_m"] =(centroid_prov.geometry.distance(centroid_pnvi.iloc[0]))/1000
+provinces["distance_parc_km"] =(centroid_prov.geometry.distance(centroid_pnvi.iloc[0]))/1000
 provinces["superficie_km2"]=(provinces.geometry.area)/1000000
 if os.path.exists(fichier_final):
     os.remove(fichier_final)

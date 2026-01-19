@@ -10,7 +10,7 @@ PROCESS_FOLDER = "processed"
 OUTPUT_FOLDER = "validated"
 MES_FILES={
     "palmiers": "basedadaptationgeneralemutwangamangina.geojson",
-    "routes" : "routes.geojsone",
+    "routes" : "routes.geojson",
     "zone" : "zones.geojson"
 }
 CRS_METRIQUE= "EPSG:32735"
@@ -21,7 +21,7 @@ os.makedirs(LOG_DIR,exist_ok=True)
 logging.basicConfig(
     filename=LOG_FILE,
     level=logging.INFO,
-    format="%(acstime)s-%(levelname)s-%(message)s"
+    format="%(asctime)s-%(levelname)s-%(message)s"
 )
 
 logging.info("Demarage de notre scrypt")
@@ -50,11 +50,11 @@ def upload_to_output(local_path):
     s3.upload_file(local_path,con.BUCKET_NAME,s3_key)
 
 logging.info("copie des fichiers de raw vers process")
-for file in MES_FILES:
+for file in MES_FILES.values():
     copy_raw_to_process(file)
-palmiers_path=download_from_process("palmiers.geojson")
+palmiers_path=download_from_process("basedadaptationgeneralemutwangamangina.geojson")
 routes_path=download_from_process("routes.geojson")
-zone_path=download_from_process("palmiers.geojson")
+zone_path=download_from_process("zones.geojson")
 palmiers=gpd.read_file(palmiers_path)
 routes = gpd.read_file(routes_path)
 zones =gpd.read_file(zone_path)
@@ -64,9 +64,8 @@ routes=routes.to_crs(CRS_METRIQUE)
 zones=zones.to_crs(CRS_METRIQUE)
 logging.info("Reprojection terminee")
 # """distance palmier route"""
-palmiers["distance_route_m"]=palmiers.geometry.apply(
-    lambda geom: routes.distance(geom).min()
-)
+# palmiers["distance_route_km"]=(palmiers.geometry.distance(routes.iloc[0]))/1000
+palmiers["distance_route_km"] = (palmiers.geometry.apply(lambda geom: routes.distance(geom).min()) / 1000)
 palmiers_result = "/tmp/palmiers_distance.geojson"
 palmiers.to_file(palmiers_result,driver="GEOJSON")
 upload_to_output(palmiers_result)
