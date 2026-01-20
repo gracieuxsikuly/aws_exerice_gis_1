@@ -3,7 +3,7 @@ from maclassetest import Maclasse
 import os
 import logging
 
-con=Maclasse
+con=Maclasse()
 s3=con.connexion_s3()
 RAW_FOLDER ="raw"
 PROCESS_FOLDER = "processed"
@@ -11,7 +11,7 @@ OUTPUT_FOLDER = "validated"
 MES_FILES={
     "palmiers": "basedadaptationgeneralemutwangamangina.geojson",
     "routes" : "routes.geojson",
-    "zone" : "zones.geojson"
+    "zone" : "Zoneculture.geojson"
 }
 CRS_METRIQUE= "EPSG:32735"
 LOG_DIR = "/tmp/logs"
@@ -25,6 +25,7 @@ logging.basicConfig(
 )
 
 logging.info("Demarage de notre scrypt")
+print("Demarage de notre scrypt")
 
 def copy_raw_to_process(filename):
     """copier un fichier de mon dossier raw/ vers le dossier process/"""
@@ -37,6 +38,7 @@ def copy_raw_to_process(filename):
         Key=dest_key
     )
     logging.info(f"Copie RAW vers PROCESSED: {filename}")
+    print(f"Copie RAW vers PROCESSED: {filename}")
 def download_from_process(filename):
     """telecharger le fichier depuis mon process vers un temp"""
     s3_key = f"{PROCESS_FOLDER}/{filename}"
@@ -50,24 +52,30 @@ def upload_to_output(local_path):
     s3.upload_file(local_path,con.BUCKET_NAME,s3_key)
 
 logging.info("copie des fichiers de raw vers process")
+print("copie des fichiers de raw vers process")
 for file in MES_FILES.values():
     copy_raw_to_process(file)
 palmiers_path=download_from_process("basedadaptationgeneralemutwangamangina.geojson")
 routes_path=download_from_process("routes.geojson")
-zone_path=download_from_process("zones.geojson")
+zone_path=download_from_process("Zoneculture.geojson")
 palmiers=gpd.read_file(palmiers_path)
 routes = gpd.read_file(routes_path)
 zones =gpd.read_file(zone_path)
 logging.info("Fichiers charges avec success")
+print("Fichiers charges avec success")
 palmiers=palmiers.to_crs(CRS_METRIQUE)
 routes=routes.to_crs(CRS_METRIQUE)
 zones=zones.to_crs(CRS_METRIQUE)
 logging.info("Reprojection terminee")
+print("Reprojection terminee")
 # """distance palmier route"""
-# palmiers["distance_route_km"]=(palmiers.geometry.distance(routes.iloc[0]))/1000
-palmiers["distance_route_km"] = (palmiers.geometry.apply(lambda geom: routes.distance(geom).min()) / 1000)
+palmiers["distance_route_km"]=(palmiers.geometry.distance(routes,align=True))/1000
+# palmiers["distance_route_km"] = (palmiers.geometry.apply(lambda geom: routes.distance(geom).min()) / 1000)
 palmiers_result = "/tmp/palmiers_distance.geojson"
-palmiers.to_file(palmiers_result,driver="GEOJSON")
+# Supprimer le fichier s'il existe
+if os.path.exists(palmiers_result):
+    os.remove(palmiers_result)
+palmiers.to_file(palmiers_result, driver="GeoJSON")
 upload_to_output(palmiers_result)
 # densite de palmiers par zone
 palmiers_zone=gpd.sjoin(palmiers,zones,predicate="within")
@@ -95,3 +103,4 @@ upload_to_output(densite_result)
 # charger le logs sur Ec2
 upload_to_output(LOG_FILE)
 logging.info("===== Fin de traitement=====")
+print("===== Fin de traitement=====")
