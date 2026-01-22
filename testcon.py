@@ -1,9 +1,23 @@
 from db import get_connection
+import geopandas as gpd
+mon_fichier="data/routes.geojson"
+table_name="roads"
 try:
     con=get_connection()
     cur=con.cursor()
-    cur.execute("SELECT VERSION();")
-    print(cur.fetchone())
+#    mon code pour insertion dans la base de donnee
+    gdf=gpd.read_file(mon_fichier)
+    print(gdf.crs)
+    srid=gdf.crs
+    # creation de ma table
+    cur.execute(f"""
+        CREATE TABLE IF NOT EXISTS {table_name}(
+        id SERIAL PRIMARY KEY,
+        geometry geometry({gdf.geom_type[0]},{srid})
+        );
+    """)
+    # insertion de mes donnes depuis le fichier
+    
     cur.close()
     con.close()
 except Exception as e:
