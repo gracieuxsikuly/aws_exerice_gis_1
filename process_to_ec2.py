@@ -150,6 +150,7 @@ def processing_resultat():
     zones["densite_palmiers_km2"] = zones["nb_palmiers"] / zones["surface_km2"]
 
     resultat = zones[[
+        "Designation",
         "nb_palmiers",
         "surface_km2",
         "densite_palmiers_km2"
