@@ -2,6 +2,7 @@ import shapely.geometry as sp
 import geopandas as gpd
 import matplotlib.pyplot as plt
 
+
 # mes lignes
 line_a = sp.LineString([(0, 0), (4, 4)])
 line_b = sp.LineString([(0, 4), (4, 0)])
@@ -11,6 +12,7 @@ poly2 = sp.Polygon([(2, 2), (6, 2), (6, 6), (2, 6)])
 # mes points
 point_1 = sp.Point(1, 1)
 point_2 = sp.Point(4, 2)
+
 
 
 # intersects, within, contains, overlaps, touches, covers, covered_by, equals, disjoint, crosses
